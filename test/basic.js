@@ -83,7 +83,7 @@ tape('create an addon and expose on HTTP with serveHTTP()', function(t) {
 				t.error(res.error, 'response error')
 				t.equal(res.ok, true, 'has response status 200')
 				t.equal(res.status, 200, 'has response status ok')
-				t.equal(res.headers['cache-control'], 'max-age=3600', 'cache headers are correct')
+				t.equal(res.headers['cache-control'], 'max-age=3600, public', 'cache headers are correct')
 				t.end()
 			})
 
@@ -153,12 +153,12 @@ tape('initialize an addon client for the addon', function(t) {
 			return addonClient.get('stream', 'channel', '11')
 				.then(function(resp) {
 					t.ok(resp.streams, 'has streams')
-					t.deepEqual(resp.args, { type: 'channel', id: '11', extra: {} }, 'args parsed right')
+					t.deepEqual(resp.args, { type: 'channel', id: '11', extra: {}, config: {} }, 'args parsed right')
 					return addonClient.get('stream', 'channel', '11', { search: 'foobar' })
 				})
 				.then(function(resp) {
 					t.ok(resp.streams, 'has streams')
-					t.deepEqual(resp.args, { type: 'channel', id: '11', extra: { search: 'foobar' } }, 'args parsed right')
+					t.deepEqual(resp.args, { type: 'channel', id: '11', extra: { search: 'foobar' }, config: {} }, 'args parsed right')
 				})
 		})
 		.then(() => t.end())
@@ -207,7 +207,7 @@ tape('defining the same handler throws', function(t) {
 
 // publishToCentral publishes to the API
 tape('publishToCentral', function(t) {
-	publishToCentral('https://cinemeta.strem.io/manifest.json')
+	publishToCentral('https://v3-cinemeta.strem.io/manifest.json')
 		.then(function(resp) {
 			t.equal(resp.success, true, 'can announce')
 			t.end()

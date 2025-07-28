@@ -49,6 +49,7 @@ async function createAddon() {
 				{name: 'stream'},
 				{name: 'meta'},
 				{name: 'subtitles'},
+				{name: 'watchStatus'},
 			]
 		},
 		{
@@ -65,7 +66,7 @@ async function createAddon() {
 	])
 
 	if (
-		!userInput.resources.includes('meta') && !userInput.resources.includes('subtitles')
+		!userInput.resources.includes('meta') && !userInput.resources.includes('subtitles') 
 		&& !userInput.types.includes('channel') && !userInput.types.includes('tv')
 	) {
 		const isFromIMDb = await inquirer.prompt([
@@ -113,7 +114,7 @@ const serverTmpl = () => `#!/usr/bin/env node
 
 const { serveHTTP, publishToCentral } = require("stremio-addon-sdk")
 const addonInterface = require("./addon")
-serveHTTP(addonInterface, { port: ${Math.floor(Math.random() * 16383) + 49152} })
+serveHTTP(addonInterface, { port: process.env.PORT || ${Math.floor(Math.random() * 16383) + 49152} })
 
 // when you've deployed your addon, un-comment this line
 // publishToCentral("https://my-addon.awesome/manifest.json")
@@ -145,7 +146,7 @@ const gitignoreTmpl = () => `node_modules
 `
 
 const catalogTmpl = () => `
-builder.defineCatalogHandler(({type, id}) => {
+builder.defineCatalogHandler(({type, id, extra}) => {
 	console.log("request for catalogs: "+type+" "+id)
 	// Docs: https://github.com/Stremio/stremio-addon-sdk/blob/master/docs/api/requests/defineCatalogHandler.md
 	return Promise.resolve({ metas: [
@@ -192,10 +193,18 @@ builder.defineStreamHandler(({type, id}) => {
 `
 
 const subtitlesTmpl = () => `
-builder.defineSubtitlesHandler(({type, id}) => {
+builder.defineSubtitlesHandler(({type, id, extra}) => {
 	console.log("request for subtitles: "+type+" "+id)
 	// Docs: https://github.com/Stremio/stremio-addon-sdk/blob/master/docs/api/requests/defineSubtitlesHandler.md
 	return Promise.resolve({ subtitles: [] })
+})
+`
+
+const watchStatusTmpl = () => `
+builder.defineWatchStatusHandler(({type, id, extra}) => {
+	console.log("request for watchStatus: "+type+" "+id+" "+extra)
+	// Docs: https://github.com/Stremio/stremio-addon-sdk/blob/master/docs/api/requests/defineWatchStatusHandler.md
+	return Promise.resolve({ watchStatus: 'success' })
 })
 `
 
@@ -209,6 +218,7 @@ function genAddonJS(manifest, resources, types) {
 		.concat(resources.includes('meta') ? [metaTmpl()] : [])
 		.concat(resources.includes('stream') ? [types.includes('movie') ? streamsMovieTmpl() : streamsTmpl()] : [])
 		.concat(resources.includes('subtitles') ? [subtitlesTmpl()] : [])
+		.concat(resources.includes('watchStatus') ? [watchStatusTmpl()] : [])
 		.concat(footerTmpl())
 		.join('')
 }
